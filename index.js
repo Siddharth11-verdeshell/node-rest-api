@@ -1,31 +1,41 @@
 const express = require('express');
 const app = express();
-
+const fs = require('fs');
+const path = require('path');
 app.use(express.json());
 
-// Sample in-memory data
-let user = {
-  id: 1,
-  name: "Siddharth",
-  role: "Intern"
-};
+// Load user data from JSON file
+const usersFile = path.join(__dirname, 'users.json');
+let users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
 
 // GET API
-app.get('/user', (req, res) => {
-  res.json(user);
+app.get('/user/:id', (req, res) => {
+  const id = req.params.id;
+  const user = users[id];
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+  } else {
+    res.json(user);
+  }
 });
 
 // PUT API
-app.put('/user', (req, res) => {
-  const { name, role } = req.body;
-
-  if (name) user.name = name;
-  if (role) user.role = role;
-
-  res.json({
-    message: "User updated successfully",
-    user
-  });
+app.put('/user/:id', (req, res) => {
+  const id = req.params.id;
+  const user = users[id];
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+  } else {
+    const { name, role } = req.body;
+    if (name) user.name = name;
+    if (role) user.role = role;
+    // Update the JSON file
+    fs.writeFileSync(usersFile, JSON.stringify(users));
+    res.json({
+      message: "User updated successfully",
+      user
+    });
+  }
 });
 
 // Server start
